@@ -135,7 +135,7 @@ async def handle_scrape(client, message):
 
     # Use temp directory for file storage
     safe_channel_name = channel_name.replace(' ', '_').replace('/', '_')
-    filename = os.path.join('temp', f"Luis_{safe_channel_name}.txt")
+    filename = os.path.join('temp', f"SwiftieXD_{safe_channel_name}.txt")
 
     with open(filename, "w") as f:
         f.write("\n".join(unique_results))
