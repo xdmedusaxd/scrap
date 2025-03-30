@@ -1,7 +1,7 @@
 import os
 from dotenv import load_dotenv
 
-# Load environment variables from .env file if present
+# Load environment variables
 load_dotenv()
 
 # API Credentials
