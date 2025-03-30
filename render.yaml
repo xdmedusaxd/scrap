@@ -1,0 +1,25 @@
+services:
+  - type: worker
+    name: telegram-card-scraper
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: python scrapper.py
+    envVars:
+      - key: API_ID
+        sync: false
+      - key: API_HASH
+        sync: false
+      - key: BOT_TOKEN
+        sync: false
+      - key: SESSION_STRING
+        sync: false
+      - key: ADMIN_IDS
+        sync: false
+      - key: DEFAULT_LIMIT
+        value: "50"
+      - key: ADMIN_LIMIT
+        value: "500"
+      - key: USERNAME
+        sync: false
+      - key: NAME
+        sync: false
