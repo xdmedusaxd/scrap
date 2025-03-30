@@ -1,7 +1,6 @@
 import re
 import os
 import asyncio
-import logging
 from urllib.parse import urlparse
 from pyrogram.enums import ParseMode
 from pyrogram import Client, filters
@@ -17,13 +16,6 @@ from config import (
     NAME,
 )
 
-# Configure logging
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-)
-logger = logging.getLogger(__name__)
-
 # Create temp directory if it doesn't exist
 os.makedirs('temp', exist_ok=True)
 
@@ -32,14 +24,18 @@ bot = Client(
     api_id=API_ID,
     api_hash=API_HASH,
     bot_token=BOT_TOKEN,
-    workers=100,  # Reduced workers for better stability
+    workers=1000,
     parse_mode=ParseMode.HTML
 )
 
+# Updated client with api_id, api_hash and no_updates=True to fix SESSION_REVOKED error
 user = Client(
     "user_session",
+    api_id=API_ID,
+    api_hash=API_HASH,
     session_string=SESSION_STRING,
-    workers=100  # Reduced workers for better stability
+    workers=1000,
+    no_updates=True  # This prevents the SESSION_REVOKED error
 )
 
 def remove_duplicates(messages):
@@ -109,7 +105,6 @@ async def handle_scrape(client, message):
         chat = await user.get_chat(channel_username)
         channel_name = chat.title
     except Exception as e:
-        logger.error(f"Error accessing channel: {e}")
         await message.reply_text(f"<b>❌ Error accessing channel: {e}</b>")
         return
 
@@ -118,7 +113,6 @@ async def handle_scrape(client, message):
     try:
         results = await scrape_messages(user, chat.id, limit, start_number)
     except Exception as e:
-        logger.error(f"Scraping failed: {e}")
         await temp_msg.edit_text(f"<b>❌ Scraping failed: {e}</b>")
         return
 
@@ -128,7 +122,7 @@ async def handle_scrape(client, message):
         await temp_msg.edit_text("<b>❌ No valid cards found</b>")
         return
 
-    # Create a safe filename
+    # Create a file with safe path handling
     safe_channel_name = ''.join(c if c.isalnum() else '_' for c in channel_name)
     filename = os.path.join('temp', f"Luis_{safe_channel_name}.txt")
 
@@ -151,7 +145,6 @@ async def handle_scrape(client, message):
             caption=caption
         )
     except Exception as e:
-        logger.error(f"Error sending file: {e}")
         await message.reply_text(f"<b>❌ Error sending file: {e}</b>\n\n{caption}")
 
     await temp_msg.delete()
@@ -159,48 +152,9 @@ async def handle_scrape(client, message):
     # Clean up the file
     try:
         os.remove(filename)
-    except Exception as e:
-        logger.error(f"Error removing file: {e}")
-
-# Add a heartbeat function to maintain the connection
-async def heartbeat():
-    while True:
-        logger.info("Heartbeat - Bot is running")
-        await asyncio.sleep(600)  # Every 10 minutes
-
-# Startup and shutdown handlers
-async def start_bot():
-    logger.info("Starting bot...")
-    await user.start()
-    await bot.start()
-
-    # Start heartbeat task
-    asyncio.create_task(heartbeat())
-
-    logger.info("Bot started successfully!")
-    # Keep the bot running
-    await idle()
-
-async def shutdown():
-    logger.info("Shutting down...")
-    await bot.stop()
-    await user.stop()
-
-# Add this to make the script properly handle termination
-async def idle():
-    try:
-        # Wait forever
-        while True:
-            await asyncio.sleep(3600)
-    except (KeyboardInterrupt, SystemExit):
-        # When CTRL+C is pressed
-        await shutdown()
+    except:
+        pass
 
 if __name__ == "__main__":
-    try:
-        loop = asyncio.get_event_loop()
-        loop.run_until_complete(start_bot())
-    except (KeyboardInterrupt, SystemExit):
-        logger.info("Bot stopped!")
-    except Exception as e:
-        logger.error(f"Fatal error: {e}")
+    user.start()
+    bot.run()
